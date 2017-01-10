@@ -27,7 +27,7 @@ NULL
 #' effectively lets the operating system clean up after the child
 #' process. Calling \code{process_send_signal()} is not accompanied by
 #' such clean-up and if the child process exits it needs to be followed
-#' by a call to \code{\link{process_poll}()}.
+#' by a call to \code{\link{process_wait}()}.
 #' 
 #' @details
 #' In Windows, signals are delivered either only to the child process or
@@ -105,7 +105,7 @@ process_kill <- function (handle)
 process_send_signal <- function (handle, signal)
 {
   stopifnot(is_process_handle(handle))
-  .Call("C_process_terminate", handle$c_handle, as.integer(signal))
+  .Call("C_process_send_signal", handle$c_handle, as.integer(signal))
 }
 
 

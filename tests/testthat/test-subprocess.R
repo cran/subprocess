@@ -1,5 +1,7 @@
 context("subprocess")
 
+killed_exit_code <- ifelse(is_windows(), 127, 9)
+
 test_that("helper works", {
   expect_true(process_exists(Sys.getpid()))
   expect_false(process_exists(99999999))
@@ -17,37 +19,23 @@ test_that("a subprocess can be spawned and killed", {
   expect_true(process_exists(handle))
   
   process_kill(handle)
-  expect_equal(process_poll(handle, TIMEOUT_INFINITE), "terminated")
+  expect_equal(process_wait(handle, TIMEOUT_INFINITE), killed_exit_code)
+  expect_equal(process_state(handle), "terminated")
   expect_false(process_exists(handle))
 })
 
 
-test_that("exchange data", {
-  on.exit(process_kill(handle))
-  handle <- R_child()
-  
-  expect_true(process_exists(handle))
-  
-  process_write(handle, 'cat("A")\n')
-  expect_equal(process_read(handle, timeout = 1000), 'A')
-})
-
-
-test_that("read from standard error output", {
+test_that("waiting for a child to exit", {
   on.exit(process_kill(handle))
   handle <- R_child()
 
-  process_write(handle, 'cat("A", file = stderr())\n')
-  expect_equal(process_read(handle, 'stderr', timeout = 1000), 'A')
-  expect_equal(process_read(handle), character())
-})
+  process_wait(handle, TIMEOUT_IMMEDIATE)
+  expect_equal(process_state(handle), "running")
+  process_kill(handle)
 
-
-test_that("write returns the number of characters", {
-  on.exit(process_kill(handle))
-  handle <- R_child()
-  
-  expect_equal(process_write(handle, 'cat("A")\n'), 9)
+  expect_equal(process_wait(handle, TIMEOUT_INFINITE), killed_exit_code)
+  expect_equal(process_state(handle), "terminated")
+  expect_equal(process_return_code(handle), killed_exit_code)
 })
 
 
@@ -64,6 +52,19 @@ test_that("can expand paths", {
   stub(spawn_process, '.Call', dotCallMock)
   handle <- spawn_process("~/local/executable")
 
-  expect_no_calls(normalizePathMock, 1)
-  expect_no_calls(dotCallMock, 1)
+  expect_called(normalizePathMock, 1)
+  expect_called(dotCallMock, 1)
+})
+
+
+test_that("handle can be printed", {
+  on.exit(process_kill(handle))
+  handle <- R_child()
+  
+  path <- gsub("\\\\", "\\\\\\\\", normalizePath(R_binary()))
+  expect_output(print(handle),
+                paste0("Process Handle\n",
+                       "command   : ", path, " --slave\n",
+                       "system id : [0-9]*\n",
+                       "state     : running"))
 })

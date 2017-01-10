@@ -16,12 +16,12 @@ windows_process_id <- function (command_line)
 test_that("child process is terminated in Windows", {
   skip_if_not(is_windows())
   
+  shell_script_child  <- shell_script  <- tempfile(fileext = '.bat')
+  write(file = shell_script_child, "waitfor SomethingThatIsNeverHappening /t 100 2>NUL")
+
   shell_script_parent <- tempfile(fileext = '.bat')
-  shell_script_child  <- tempfile(fileext = '.bat')
-  
   write(file = shell_script_parent, paste('start "subprocess test child" /b',
                                           shell_script_child))
-  write(file = shell_script_child, "waitfor SomethingThatIsNeverHappening /t 100 2>NUL")
 
   # start the parent process which in turn spawns a child process
   parent_handle <- spawn_process("c:\\Windows\\System32\\cmd.exe",
@@ -35,12 +35,12 @@ test_that("child process is terminated in Windows", {
   
   # ... and not after we kill the parent
   process_kill(parent_handle)
-  expect_equal(process_poll(parent_handle, TIMEOUT_INFINITE), "terminated")
+  process_wait(parent_handle, TIMEOUT_INFINITE)
+  expect_equal(process_state(parent_handle), "terminated")
   
   # give the child a moment to dissapear from OS tables
-  Sys.sleep(1)
-  expect_false(process_exists(parent_handle))
-  expect_false(process_exists(child_id))
+  expect_true(wait_until_exits(parent_handle))
+  expect_true(wait_until_exits(child_id))
 })
 
 
@@ -73,13 +73,40 @@ test_that("child process is terminated in Linux", {
   parent_handle <- spawn_process(shell, shell_script_parent)
   expect_true(process_exists(parent_handle))
   
-  # make sure the child exists
+  # make sure the child exists; this sometimes fails in Linux (seen only
+  # in runs performed by other people), I'm not really sure why but one
+  # possibility is that the first shell script already knows its child's
+  # PID but pgrep cannot see it just yet - that is, a RACE condition;
+  # we address it by adding a timeout...
+  start <- proc.time()
   child_id <- as.integer(process_read(parent_handle, 'stdout', 1000))
-  expect_true(process_exists(child_id))
+
+  # now make sure it actually has appeared
+  expect_true(wait_until_appears(child_id))
 
   # ... and not after we kill the parent
   process_kill(parent_handle)
-  expect_equal(process_poll(parent_handle, TIMEOUT_INFINITE), "terminated")
+
+  expect_true(wait_until_exits(parent_handle))
+  process_wait(parent_handle, TIMEOUT_INFINITE)
+  expect_equal(process_state(parent_handle), "terminated")
+
+  expect_true(wait_until_exits(child_id))
   expect_false(process_exists(parent_handle))
   expect_false(process_exists(child_id))
 })
+
+
+# --- closing the stdin stream -----------------------------------------
+
+
+test_that("child exits when stdin is closed", {
+  on.exit(process_kill(handle))
+  handle <- R_child()
+  expect_true(process_exists(handle))
+
+  process_close_input(handle)
+  expect_equal(process_wait(handle, TIMEOUT_INFINITE), 0)
+  expect_equal(process_state(handle), "exited")
+})
+
