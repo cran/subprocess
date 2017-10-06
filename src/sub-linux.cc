@@ -18,7 +18,11 @@
 #include <fcntl.h>              /* Obtain O_* constant definitions */
 #include <unistd.h>
 
-#ifdef __MACH__
+#include "config-os.h"
+#include "subprocess.h"
+
+
+#ifdef SUBPROCESS_MACOS
 #include <mach/clock.h>
 #include <mach/mach.h>
 
@@ -26,8 +30,6 @@
 extern char ** environ;
 #endif
 
-
-#include "subprocess.h"
 
 #ifdef TRUE
 #undef TRUE
@@ -80,7 +82,9 @@ static time_t clock_millisec ()
   clock_gettime(CLOCK_REALTIME, &current);
 #endif
 
-  return (int)current.tv_sec * 1000 + (int)(current.tv_nsec / 1000000);
+  long long current_time = static_cast<long long>(current.tv_sec) * 1000L +
+                           static_cast<long long>(current.tv_nsec / 1000000L);
+  return static_cast<time_t>(current_time);
 }
 
 
