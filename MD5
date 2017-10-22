@@ -1,7 +1,7 @@
-028e194a3438f90153404ae6655c8973 *DESCRIPTION
+8a827ed706d61d350d1bf8d1b22e0ed8 *DESCRIPTION
 7ec1ddb671363785340e69164bc39424 *LICENSE
 bd8014193b296e94a8a55af92314ea4c *NAMESPACE
-c84d2b3c2c341f8b171efd5218c8bb5f *NEWS.md
+dfc3439e068e01d0ef5a07d0f3372abe *NEWS.md
 ac9231d17923178e560a13f91d389318 *R/package.R
 0c2a9345d25f11a12d09853793b44a23 *R/readwrite.R
 e5eb0fa53f6b78a3d10e9fca60d97508 *R/signals.R
@@ -35,7 +35,7 @@ f804e2479910561b3ee4a4f6d0c6905b *tests/testthat.R
 6e810a5bbf7db7b42422c72dae6a4316 *tests/testthat/helper-mockery.R
 c6e3bfe53d50b2c02a202cc41d67e02d *tests/testthat/helper-processes.R
 47026f059f7fbabbc85e7a6ad3e8c2bb *tests/testthat/signal-trap.sh
-3f50d4d2ce7d3d31f9864735ef35ba34 *tests/testthat/test-package.R
+69bbc236d6426dd85002e457c6d3aed0 *tests/testthat/test-package.R
 de7933f7b265081373070f5e4a686ccf *tests/testthat/test-parameters.R
 db7007d8d9e6dd53e391f68720cb19e2 *tests/testthat/test-readwrite.R
 c3c30aa1fc9eecd552c4cc914b58570d *tests/testthat/test-signals.R
